@@ -2,12 +2,11 @@ var express = require('express');
 var path = require('path');
 var phantom = require('phantom')
 var app = express();
-var fs = require('fs');
 var ejs = require('ejs');
-var aws = require('aws-sdk');
+var AWS = require('aws-sdk');
+var fs = require('fs');
 
-aws.config.loadFromPath('./config.json');
-var s3 = new aws.s3();
+
 
 app.use(express.bodyParser());
 app.set('views', __dirname + '/views');
@@ -29,6 +28,19 @@ app.post('/print', function(req, res){
 	  	return page.set('content', html, function(){
 	  		return page.render('google.pdf', function(){
 	  			console.log('rendered');
+				fs.readFile('google.pdf', function(err, data){
+					AWS.config.loadFromPath('./config.json');
+					var s3 = new AWS.S3();
+					console.log(data);
+					s3.client.putObject({
+						'Bucket':"habitsreports",
+						'Key':'google.pdf',
+						'Body': data
+					},function(err, data){
+						console.log(data);
+						console.log('Updated');
+					});	
+				})	  			
 	  			ph.exit();
 	  		});
 	  	});
@@ -36,15 +48,6 @@ app.post('/print', function(req, res){
 	});	
 });
 
-fs.readFile('google.pdf', function(err, data){
-	s3.client.putObject({
-		'Bucket':"habitstestassets",
-		'Key':'google.pdf',
-		'body': data
-	}).done(function(resp){
-		console.log('Updated');
-	});	
-})
 
 
 
