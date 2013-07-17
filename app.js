@@ -4,6 +4,11 @@ var phantom = require('phantom')
 var app = express();
 var fs = require('fs');
 var ejs = require('ejs');
+var aws = require('aws-sdk');
+
+aws.config.loadFromPath('./config.json');
+var s3 = new aws.s3();
+
 app.use(express.bodyParser());
 app.set('views', __dirname + '/views');
 app.set('view engine', 'ejs');
@@ -30,6 +35,18 @@ app.post('/print', function(req, res){
 	  });
 	});	
 });
+
+fs.readFile('google.pdf', function(err, data){
+	s3.client.putObject({
+		'Bucket':"habitstestassets",
+		'Key':'google.pdf',
+		'body': data
+	}).done(function(resp){
+		console.log('Updated');
+	});	
+})
+
+
 
 var port = process.env.PORT || 5000;
 app.listen(port, function() {
